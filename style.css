@@ -1,0 +1,711 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: #000;
+  overflow: hidden;
+  cursor: none;
+}
+
+.spaceship-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #2c1810 0%, #1a0f08 50%, #0f0704 100%);
+}
+
+/* Vista principal de la nave */
+.main-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:url(assets/default.png) ;
+  background-size: cover;
+  background-position: center;
+  transition: all 1s ease-in-out;
+}
+
+/* ----- Overlay que GSAP animará ----- */
+.bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;              /* Arranca invisible */
+  pointer-events: none;    /* No bloquea clicks */
+  transition: none;        /* Lo maneja GSAP */
+  z-index: 2;              /* Entre .main-view y .screen */
+}
+
+/* Pantallas interactivas */
+.screen {
+  position: absolute;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  background: rgba(0, 20, 0, 0.3);
+  z-index: 3;              /* Por encima del overlay */
+}
+
+.screen:hover {
+  background: rgba(0, 255, 0, 0.1);
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+}
+
+.screen-left {
+  top: 35%;
+  left: 18.5%;
+  width: 18%;
+  height: 18%;
+  overflow: hidden;
+  transform: perspective(1000px) rotateY(25deg) rotateX(10deg) rotateZ(-2deg);;
+  transform-style: preserve-3d;
+}
+
+.screen-right {
+  top: 85.5%;
+  left: 32%;
+  width: 6%;
+  height: 13%;
+}
+
+.screen-bottom {
+  bottom: 5%;
+  left: 50%;
+  transform: translateX(-50%) perspective(1000px) rotateX(30deg);
+  width: 16%;
+  height: 18%;
+  transform-style: preserve-3d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.screen-bottom .screen-indicator {
+  transform: translateZ(30px);
+  text-shadow: 0 5px 10px rgba(0, 255, 65, 0.3);
+  font-size: 30px;
+  position: relative;
+  left: 0;
+  bottom: 0;
+  transform: translateZ(30px);
+  opacity: 1;
+  width: 100%;
+  text-align: center;
+}
+
+.screen-bottom .screen-indicator span {
+  display: none;
+}
+
+.screen-bottom .screen-indicator .text-default {
+  display: block;
+}
+
+.screen-bottom:hover .screen-indicator {
+  opacity: 1;
+}
+
+/* Estados de las pantallas */
+.screen.active {
+  background: rgba(0, 255, 65, 0.1);
+  box-shadow: 0 0 30px rgba(0, 255, 65, 0.5);
+}
+
+/* Vista zoom de pantalla */
+.zoom-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url(assets/YO_Blank\ .png) center/cover;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.8s ease-in-out;
+  z-index: 100;
+}
+
+.zoom-view.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Terminal de pantalla en zoom */
+.terminal {
+position: absolute;
+top: 48%;
+left: 50%;
+transform: translate(-50%, -50%) perspective(1000px) rotateX(2deg);
+width: 100%;
+max-width: 1400px;
+height: 80%;
+background: transparent;
+border: 4px solid #cc6633;
+border-radius: 15px;
+padding: 20px 40px;
+box-shadow: 0 0 30px rgba(0, 255, 65, 0.2);
+overflow: hidden;
+}
+
+/* Efecto CRT */
+.terminal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 65, 0.02) 2px,
+      rgba(0, 255, 65, 0.02) 4px
+  );
+  pointer-events: none;
+  animation: scanlines 0.1s linear infinite;
+}
+
+@keyframes scanlines {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #00ff41;
+  margin-bottom: 20px;
+  transform: perspective(1000px) rotateX(2deg);
+  transform-style: preserve-3d;
+}
+
+.terminal-title {
+  color: #00ff41;
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 0 0 10px #00ff41;
+  transform: translateZ(30px);
+}
+
+.terminal-info {
+  color: #00cc33;
+  font-size: 14px;
+  transform: translateZ(30px);
+}
+
+.terminal-content {
+  color: #00ff41;
+  line-height: 1.6;
+  font-size: 16px;
+  text-shadow: 0 0 5px #00ff41;
+  height: calc(100% - 20px);
+  overflow-y: auto;
+  transform: perspective(1000px) rotateX(2deg);
+  transform-style: preserve-3d;
+  padding-right: 20px;
+}
+
+/* Estilo personalizado para la barra de scroll */
+.terminal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.terminal-content::-webkit-scrollbar-track {
+  background: rgba(0, 20, 0, 0.3);
+  border-radius: 4px;
+}
+
+.terminal-content::-webkit-scrollbar-thumb {
+  background: #00ff41;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+}
+
+.terminal-content::-webkit-scrollbar-thumb:hover {
+  background: #00cc33;
+}
+
+.profile-section {
+  display: grid;
+  grid-template-columns: minmax(350px, 400px) 2.5fr;
+  gap: 40px;
+  height: 100%;
+  transform: perspective(1000px) rotateX(2deg);
+  transform-style: preserve-3d;
+  padding: 0 10px;
+}
+
+.profile-left {
+  padding-right: 20px;
+  transform: translateZ(20px);
+  min-width: 350px;
+  max-width: 400px;
+}
+
+.profile-avatar {
+  width: 250px;
+  height: 250px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60px;
+  overflow: hidden;
+  border: 2px solid #00ff41;
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-basic-info {
+  margin-bottom: 0px;
+  padding-left: 10px;
+}
+
+.info-line {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.info-label {
+  color: #00cc33;
+  transform: translateZ(15px);
+  font-size: 14px;
+}
+
+.info-value {
+  color: #00ff41;
+  transform: translateZ(15px);
+  word-break: break-word;
+  font-size: 15px;
+  padding-left: 5px;
+}
+
+.software-list {
+  list-style: none;
+}
+
+.software-list li {
+  margin-bottom: 5px;
+  position: relative;
+  padding-left: 20px;
+}
+
+.software-list li::before {
+  content: '[✓]';
+  position: absolute;
+  left: 0;
+  color: #00cc33;
+}
+
+.profile-right {
+  padding-left: 20px;
+  transform: translateZ(20px);
+  min-width: 0;
+}
+
+.description {
+  margin-bottom: 20px;
+  text-align: justify;
+  transform: translateZ(15px);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.auth-level {
+  background: rgba(0, 255, 65, 0.1);
+  border: 1px solid #00ff41;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  margin-top: 20px;
+  transform: translateZ(25px);
+}
+
+/* Botones de navegación */
+.nav-button {
+  position: absolute;
+  bottom: 30px;
+  background: rgba(0, 255, 65, 0.2);
+  border: 2px solid #00ff41;
+  color: #00ff41;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  text-shadow: 0 0 5px #00ff41;
+}
+
+.nav-button:hover {
+  background: rgba(0, 255, 65, 0.3);
+  box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+}
+
+.btn-back {
+  left: 30px;
+}
+
+.btn-zoom {
+  right: 30px;
+}
+
+/* Efectos de typing */
+.typing {
+  overflow: hidden;
+  border-right: 2px solid #00ff41;
+  white-space: nowrap;
+  animation: typing 2s steps(40, end), blink-caret 1s step-end infinite;
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: #00ff41; }
+}
+
+/* Indicadores de estado */
+.screen-indicator {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #00ff41;
+  font-size: 14px;
+  text-shadow: 0 0 5px #00ff41;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.screen:hover .screen-indicator {
+  opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .terminal {
+      width: 95%;
+      height: 90%;
+      padding: 15px;
+  }
+  
+  .profile-section {
+      grid-template-columns: 1fr;
+      gap: 20px;
+  }
+  
+  .profile-left {
+      border-right: none;
+      border-bottom: 1px solid #00cc33;
+      padding-right: 0;
+      padding-bottom: 20px;
+  }
+}
+
+.screen-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  transform: scale(0.8);
+  transform-origin: center;
+}
+
+.screen-left:hover .screen-content {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+}
+
+.screen-left:hover .screen-indicator {
+  opacity: 0;
+}
+
+.screen-content .terminal {
+  position: relative;
+  top: 0;
+  left: 0;
+  transform: none;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  font-size: 12px;
+}
+
+.screen-content .terminal-header {
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+}
+
+.screen-content .terminal-title {
+  font-size: 16px;
+}
+
+.screen-content .terminal-info {
+  font-size: 10px;
+}
+
+.screen-content .profile-section {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  height: auto;
+  overflow-y: auto;
+}
+
+.screen-content .profile-left {
+  border-right: none;
+  border-bottom: 1px solid #00cc33;
+  padding-right: 0;
+  padding-bottom: 10px;
+}
+
+.screen-content .profile-avatar {
+  width: 80px;
+  height: 80px;
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.screen-content .info-line {
+  margin-bottom: 4px;
+  font-size: 10px;
+}
+
+.screen-content .info-label {
+  min-width: 80px;
+}
+
+.screen-content .description {
+  font-size: 10px;
+  margin-bottom: 10px;
+}
+
+.screen-content .auth-level {
+  font-size: 10px;
+  padding: 5px;
+  margin-top: 10px;
+}
+
+.screen-content .software-list {
+  font-size: 10px;
+}
+
+.screen-content .software-list li {
+  margin-bottom: 2px;
+}
+
+.screen-preview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  background: rgba(0, 20, 0, 0.8);
+  border: 1px solid #00ff41;
+  padding: 10px;
+  transform: translateZ(20px);
+  transform-style: preserve-3d;
+}
+
+.screen-left:hover .screen-preview {
+  opacity: 1;
+  visibility: visible;
+}
+
+.screen-left:hover .screen-indicator {
+  opacity: 0;
+}
+
+.preview-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  color: #00ff41;
+  font-size: 12px;
+  transform: translateZ(30px);
+}
+
+.preview-header {
+  border-bottom: 1px solid #00ff41;
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+  transform: translateZ(25px);
+}
+
+.preview-title {
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 0 0 5px #00ff41;
+  margin: 0;
+}
+
+.preview-info {
+  font-size: 10px;
+  color: #00cc33;
+}
+
+.preview-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transform: translateZ(35px);
+  padding: 5px;
+}
+
+.preview-avatar {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 8px;
+  transform: translateZ(40px);
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #00ff41;
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+}
+
+.preview-name {
+  font-size: 11px;
+  font-weight: bold;
+  margin: 8px 0 3px;
+  text-shadow: 0 0 5px #00ff41;
+  transform: translateZ(30px);
+}
+
+.preview-role {
+  font-size: 9px;
+  color: #00cc33;
+  transform: translateZ(25px);
+  margin: 0;
+}
+
+.btn-fullscreen {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  background: rgba(0, 255, 65, 0.1);
+  border: 1px solid #00ff41;
+  color: #00ff41;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  transition: all 0.3s ease;
+  text-shadow: 0 0 5px #00ff41;
+  opacity: 0.7;
+}
+
+.btn-fullscreen:hover {
+  background: rgba(0, 255, 65, 0.2);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+  opacity: 1;
+}
+
+/* Estilo para cuando está en pantalla completa */
+:fullscreen .btn-fullscreen {
+  top: 15px;
+  right: 15px;
+}
+
+/* Cursor personalizado */
+.cursor {
+  width: 20px;
+  height: 20px;
+  background: #00ff41;
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  mix-blend-mode: difference;
+  z-index: 100000;
+  transition: transform 0.2s ease;
+  box-shadow: 0 0 10px #00ff41;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.cursor::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px;
+  height: 4px;
+  background: #000;
+  border-radius: 50%;
+}
+
+.cursor.active {
+  transform: scale(1.5);
+  background: #00ff41;
+  box-shadow: 0 0 20px #00ff41;
+}
+
+/* Asegurar que los elementos interactivos muestren el cursor personalizado */
+a, button, .screen, .nav-button, .start-btn, .btn-back, .btn-zoom {
+  cursor: none;
+}
+
+/* Asegurar que el cursor sea visible sobre todos los elementos */
+.spaceship-container, .main-view, .zoom-view, .terminal {
+  pointer-events: auto;
+}
+
+.start-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.5s ease;
+}
+
+.start-screen.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
